@@ -34,28 +34,41 @@ sample_list_model = ns.model('SampleListModel', {
     'pagination': fields.Nested(pagination_model)
 })
 
-# 4. 改造 Resource
-@ns.route('/') # 將路由註冊到這個 namespace 下
+# 建立一個請求解析器，用來處理 URL 查詢參數
+parser = ns.parser()
+parser.add_argument('page', type=int, default=1, help='頁碼')
+parser.add_argument('per_page', type=int, default=5, help='每頁筆數')
+
+
+@ns.route('/')
 class SampleList(Resource):
     
-    @ns.marshal_with(sample_list_model) # 使用我們定義的列表模型來封送回傳值
+    @ns.marshal_with(sample_list_model)
+    @ns.expect(parser) # 告訴 Swagger UI 我們期望接收這些參數
     def get(self):
-        """獲取產線紀錄列表"""
+        """獲取產線紀錄列表 (支援分頁)"""
+        args = parser.parse_args()
+        page = args['page']
+        per_page = args['per_page']
         
-        # 從資料庫查詢所有 Sample 紀錄
-        all_samples = Sample.query.all()
+        # 使用 SQLAlchemy 的 paginate() 方法進行分頁查詢
+        # error_out=False 能防止在請求不存在的頁面時拋出 404 錯誤
+        pagination_obj = Sample.query.order_by(Sample.timestamp.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
         
-        # 組合回傳的資料結構，以符合 sample_list_model 的定義
-        # TODO: 未來這裡會加上真正的分頁邏輯
+        # 從分頁物件中提取我們需要的資料
+        paginated_samples = pagination_obj.items
+        
         response_data = {
-            'data': all_samples,
+            'data': paginated_samples,
             'pagination': {
-                'total_items': len(all_samples),
-                'total_pages': 1,
-                'current_page': 1,
-                'per_page': len(all_samples),
-                'has_next': False,
-                'has_prev': False
+                'total_items': pagination_obj.total,
+                'total_pages': pagination_obj.pages,
+                'current_page': pagination_obj.page,
+                'per_page': pagination_obj.per_page,
+                'has_next': pagination_obj.has_next,
+                'has_prev': pagination_obj.has_prev
             }
         }
         
