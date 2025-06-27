@@ -34,30 +34,40 @@ sample_list_model = ns.model('SampleListModel', {
     'pagination': fields.Nested(pagination_model)
 })
 
-# 建立一個請求解析器，用來處理 URL 查詢參數
+# 更新請求解析器，加入排序相關參數
 parser = ns.parser()
 parser.add_argument('page', type=int, default=1, help='頁碼')
 parser.add_argument('per_page', type=int, default=5, help='每頁筆數')
+parser.add_argument('sort_by', type=str, default='timestamp', help='排序欄位')
+parser.add_argument('order', type=str, default='desc', help='排序順序 (asc/desc)')
 
 
 @ns.route('/')
 class SampleList(Resource):
     
     @ns.marshal_with(sample_list_model)
-    @ns.expect(parser) # 告訴 Swagger UI 我們期望接收這些參數
+    @ns.expect(parser)
     def get(self):
-        """獲取產線紀錄列表 (支援分頁)"""
+        """獲取產線紀錄列表 (支援分頁與排序)"""
         args = parser.parse_args()
         page = args['page']
         per_page = args['per_page']
+        sort_by_column_name = args['sort_by']
+        order_direction = args['order']
+
+        # 動態排序邏輯
+        sort_column = getattr(Sample, sort_by_column_name, Sample.timestamp) # 安全地取得排序欄位，預設為 timestamp
         
-        # 使用 SQLAlchemy 的 paginate() 方法進行分頁查詢
-        # error_out=False 能防止在請求不存在的頁面時拋出 404 錯誤
-        pagination_obj = Sample.query.order_by(Sample.timestamp.desc()).paginate(
+        if order_direction.lower() == 'asc':
+            order_logic = sort_column.asc()
+        else:
+            order_logic = sort_column.desc()
+            
+        # 將排序邏輯應用到查詢中
+        pagination_obj = Sample.query.order_by(order_logic).paginate(
             page=page, per_page=per_page, error_out=False
         )
         
-        # 從分頁物件中提取我們需要的資料
         paginated_samples = pagination_obj.items
         
         response_data = {

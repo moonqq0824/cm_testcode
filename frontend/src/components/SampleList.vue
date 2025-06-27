@@ -22,29 +22,60 @@ interface Pagination {
   has_prev: boolean;
 }
 
+// --- 響應式狀態 ---
 const samples = ref<Sample[]>([]);
-// 建立一個 ref 來存放後端回傳的分頁資訊
 const pagination = ref<Pagination | null>(null);
+const currentPage = ref(1); // 用來追蹤當前頁面，方便分頁按鈕使用
 
-// 修改 fetchData 函式，讓它可以接收頁碼參數
-const fetchData = async (page = 1) => {
+// 新增：用來追蹤排序狀態
+const sortColumn = ref('timestamp'); // 預設排序欄位
+const sortOrder = ref('desc'); // 預設排序順序
+
+// --- 方法 ---
+// 改造 fetchData，讓它同時處理分頁和排序
+const fetchData = async () => {
   try {
     const response = await axios.get('http://localhost:5000/api/v1/samples', {
       params: {
-        page: page,
-        per_page: 5 // 與後端預設值保持一致
+        page: currentPage.value,
+        per_page: 5,
+        sort_by: sortColumn.value,
+        order: sortOrder.value,
       }
     });
     samples.value = response.data.data;
-    pagination.value = response.data.pagination; // 儲存分頁資訊
+    pagination.value = response.data.pagination;
   } catch (error) {
     console.error('抓取資料時發生錯誤:', error);
   }
 };
 
+// 新增：處理表頭點擊事件的函式
+const handleSort = (columnName: string) => {
+  // 如果點擊的是當前已排序的欄位，則反轉排序方向
+  if (sortColumn.value === columnName) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    // 否則，設定新的排序欄位，並預設為降序
+    sortColumn.value = columnName;
+    sortOrder.value = 'desc';
+  }
+  // 重新抓取第一頁的資料
+  currentPage.value = 1;
+  fetchData();
+};
+
+// --- 生命週期掛鉤 ---
 onMounted(() => {
-  fetchData(); // 初始載入第一頁
+  fetchData();
 });
+
+// 改造分頁按鈕的函式
+const changePage = (page: number) => {
+  currentPage.value = page;
+  fetchData();
+}
+
 </script>
 
 <template>
@@ -52,13 +83,31 @@ onMounted(() => {
     <table>
       <thead>
         <tr>
-          <th>ID</th>
-          <th>產線名稱</th>
-          <th>產品名稱</th>
-          <th>時間戳記</th>
-          <th>指標 A</th>
-          <th>指標 B</th>
-          <th>操作員</th>
+          <th @click="handleSort('id')">
+            ID
+            <span v-if="sortColumn === 'id'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th @click="handleSort('line_name')">
+            產線名稱
+            <span v-if="sortColumn === 'line_name'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th @click="handleSort('product_name')">產品名稱</th>
+          <th @click="handleSort('timestamp')">
+            時間戳記
+            <span v-if="sortColumn === 'timestamp'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th @click="handleSort('metric_a')">
+            指標 A
+            <span v-if="sortColumn === 'metric_a'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th @click="handleSort('metric_b')">
+            指標 B
+            <span v-if="sortColumn === 'metric_b'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th @click="handleSort('operator')">
+            操作員
+            <span v-if="sortColumn === 'operator'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -75,13 +124,13 @@ onMounted(() => {
     </table>
 
     <div class="pagination-controls" v-if="pagination">
-      <button @click="fetchData(pagination.current_page - 1)" :disabled="!pagination.has_prev">
+      <button @click="changePage(pagination.current_page - 1)" :disabled="!pagination.has_prev">
         上一頁
       </button>
       <span>
         頁數 {{ pagination.current_page }} / {{ pagination.total_pages }}
       </span>
-      <button @click="fetchData(pagination.current_page + 1)" :disabled="!pagination.has_next">
+      <button @click="changePage(pagination.current_page + 1)" :disabled="!pagination.has_next">
         下一頁
       </button>
     </div>
@@ -134,4 +183,15 @@ button:disabled {
   cursor: not-allowed;
   color: #aaa;
 }
+
+/* 新增 th 的樣式，讓它看起來可以點擊 */
+th {
+  cursor: pointer;
+  user-select: none; /* 防止點擊時選取文字 */
+}
+
+th:hover {
+  background-color: #e8e8e8;
+}
+
 </style>

@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import Sidebar from './components/Sidebar.vue';
-import SampleList from './components/SampleList.vue';
+// 目前不需要任何 script 邏輯
 </script>
 
 <template>
-  <div class="app-layout">
-    <Sidebar />
-    <main class="main-content">
-      <SampleList />
-    </main>
-  </div>
+  <aside class="sidebar">
+    <h1 class="sidebar-title">數據平台</h1>
+    <nav class="nav-menu">
+      <a href="#" class="nav-link active">產線紀錄總覽</a>
+      <a href="#" class="nav-link">首頁儀表板</a>
+      <a href="#" class="nav-link">產線分析圖表</a>
+    </nav>
+  </aside>
 </template>
 
 <style scoped>
