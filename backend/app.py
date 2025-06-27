@@ -1,25 +1,30 @@
-# backend/app.py
+# backend/app.py (建議的調整)
 
 from flask import Flask
 from flask_cors import CORS
 from config import Config
-from api import api_bp # 從 api 套件匯入我們的 Blueprint
+from api import api_bp
+from extensions import db
+from models import Sample
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # 啟用 CORS，允許所有來源的請求（在開發階段很方便）
-    CORS(app)
+    # 初始化 extensions
+    db.init_app(app)
 
-    # 註冊 API 藍圖，並設定 URL 前綴為 /api
-    # 最終 API 的完整路徑會是 /api/v1/samples
+    CORS(app)
     app.register_blueprint(api_bp, url_prefix='/api')
+
+    # 將 shell_context_processor 的設定也移入工廠函式中
+    @app.shell_context_processor
+    def make_shell_context():
+        return {'db': db, 'Sample': Sample}
 
     return app
 
-# 為了讓 .flaskenv 能正確找到 app
-app = create_app()
-
+# 只有在直接執行這個檔案時，才建立並運行 app
 if __name__ == '__main__':
+    app = create_app()
     app.run()
