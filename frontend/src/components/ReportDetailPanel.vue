@@ -2,17 +2,26 @@
 // --- 型別定義 ---
 // 我們從主頁面複製一份過來，確保資料型別一致
 interface ReportItem {
-  id: number; item_name: string; value: number; unit: string; standard: string; is_compliant: boolean;
+  id: number;
+  item_name: string;
+  value: number;
+  unit: string;
+  standard: string;
+  is_compliant: boolean;
 }
 interface Report {
-  id: number; report_date: string; vendor: string; status: string; items: ReportItem[];
+  id: number;
+  report_date: string;
+  vendor: string;
+  status: string;
+  items: ReportItem[];
 }
 
 // --- Props & Emits ---
 // 1. defineProps: 定義這個元件可以從「外部(父層)」接收哪些資料
 //    我們定義了一個名為 `report` 的 prop，用來接收要顯示的報告物件
 const props = defineProps<{
-  report: Report | null
+  report: Report | null;
 }>();
 
 // 2. defineEmits: 定義這個元件可以向「外部(父層)」發送哪些事件
@@ -36,7 +45,7 @@ const formatDateTime = (isoString: string | null) => {
       <div class="panel-body">
         <p><strong>報告日期：</strong>{{ formatDateTime(report.report_date) }}</p>
         <p><strong>總體狀態：</strong>{{ report.status }}</p>
-        
+
         <h4>檢測項目詳情</h4>
         <table class="items-table">
           <thead>
@@ -59,9 +68,13 @@ const formatDateTime = (isoString: string | null) => {
           </tbody>
         </table>
 
-        <div class="panel-actions">
-           </div>
-
+        <div class="panel-actions" v-if="report">
+          <template v-if="report.status === '部分項目不合格'">
+            <button class="action-btn track-btn">處理與追蹤</button>
+            <button class="action-btn doc-btn">產生公文</button>
+          </template>
+          <p v-else class="no-action-text">目前狀態無需額外操作。</p>
+        </div>
       </div>
     </div>
   </div>
@@ -86,7 +99,7 @@ const formatDateTime = (isoString: string | null) => {
   min-width: 400px;
   height: 100%;
   background-color: white;
-  box-shadow: -5px 0 15px rgba(0,0,0,0.2);
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
 }
@@ -122,7 +135,8 @@ const formatDateTime = (isoString: string | null) => {
   border-collapse: collapse;
   margin-top: 1rem;
 }
-.items-table th, .items-table td {
+.items-table th,
+.items-table td {
   border: 1px solid #ddd;
   padding: 8px;
   text-align: left;
@@ -132,8 +146,48 @@ const formatDateTime = (isoString: string | null) => {
 }
 
 .panel-actions {
-    margin-top: 2rem;
-    padding-top: 1rem;
-    border-top: 1px solid #e2e8f0;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.panel-actions {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.action-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.track-btn {
+  background-color: #f59e0b; /* 黃色 */
+  color: white;
+  border-color: #f59e0b;
+}
+
+.doc-btn {
+  background-color: #64748b; /* 灰色 */
+  color: white;
+  border-color: #64748b;
+}
+
+.action-btn:hover {
+  opacity: 0.9;
+}
+
+.no-action-text {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin: 0;
 }
 </style>
