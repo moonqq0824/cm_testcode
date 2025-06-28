@@ -2,6 +2,7 @@
 
 from flask import Blueprint
 from flask_restx import Api
+from .charts import ns as charts_ns # <-- 匯入新的 charts_ns
 
 # 從各個功能模組匯入它們自己的 Namespace
 from .samples import ns as samples_ns
@@ -19,3 +20,4 @@ api = Api(api_bp,
 # 將匯入的 Namespace 註冊到我們的 Api 物件
 api.add_namespace(samples_ns, path='/v1/samples')
 api.add_namespace(statistics_ns, path='/v1/statistics') # <-- 2. 註冊新的 namespace
+api.add_namespace(charts_ns, path='/v1/charts')

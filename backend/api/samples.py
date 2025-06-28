@@ -40,6 +40,7 @@ parser.add_argument('page', type=int, default=1, help='頁碼')
 parser.add_argument('per_page', type=int, default=5, help='每頁筆數')
 parser.add_argument('sort_by', type=str, default='timestamp', help='排序欄位')
 parser.add_argument('order', type=str, default='desc', help='排序順序 (asc/desc)')
+parser.add_argument('line_name', type=str, help='產線名稱篩選') # <-- 新增篩選參數
 
 
 @ns.route('/')
@@ -48,23 +49,31 @@ class SampleList(Resource):
     @ns.marshal_with(sample_list_model)
     @ns.expect(parser)
     def get(self):
-        """獲取產線紀錄列表 (支援分頁與排序)"""
+        """獲取產線紀錄列表 (支援分頁、排序與篩選)"""
         args = parser.parse_args()
         page = args['page']
         per_page = args['per_page']
         sort_by_column_name = args['sort_by']
         order_direction = args['order']
+        line_name_filter = args['line_name'] # <-- 取得篩選參數值
 
+        # 基礎查詢
+        base_query = Sample.query
+
+        # 如果有提供產線名稱篩選，則加入 filter 條件
+        if line_name_filter:
+            base_query = base_query.filter(Sample.line_name == line_name_filter)
+            
         # 動態排序邏輯
-        sort_column = getattr(Sample, sort_by_column_name, Sample.timestamp) # 安全地取得排序欄位，預設為 timestamp
+        sort_column = getattr(Sample, sort_by_column_name, Sample.timestamp)
         
         if order_direction.lower() == 'asc':
             order_logic = sort_column.asc()
         else:
             order_logic = sort_column.desc()
             
-        # 將排序邏輯應用到查詢中
-        pagination_obj = Sample.query.order_by(order_logic).paginate(
+        # 將排序與分頁應用到查詢中
+        pagination_obj = base_query.order_by(order_logic).paginate(
             page=page, per_page=per_page, error_out=False
         )
         
@@ -74,6 +83,7 @@ class SampleList(Resource):
             'data': paginated_samples,
             'pagination': {
                 'total_items': pagination_obj.total,
+                # ... 其他分頁欄位不變 ...
                 'total_pages': pagination_obj.pages,
                 'current_page': pagination_obj.page,
                 'per_page': pagination_obj.per_page,

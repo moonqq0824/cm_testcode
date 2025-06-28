@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'; // <-- 匯入 computed
+import { ref, onMounted } from 'vue';
 import axios from 'axios';
 
+// --- 型別定義 (不變) ---
 interface Sample {
   id: number;
   line_name: string;
@@ -11,8 +12,6 @@ interface Sample {
   metric_b: number;
   operator: string;
 }
-
-// 新增一個型別給分頁資訊
 interface Pagination {
   total_items: number;
   total_pages: number;
@@ -25,24 +24,31 @@ interface Pagination {
 // --- 響應式狀態 ---
 const samples = ref<Sample[]>([]);
 const pagination = ref<Pagination | null>(null);
-const currentPage = ref(1); // 用來追蹤當前頁面，方便分頁按鈕使用
+const currentPage = ref(1);
+const sortColumn = ref('timestamp');
+const sortOrder = ref('desc');
 
-// 新增：用來追蹤排序狀態
-const sortColumn = ref('timestamp'); // 預設排序欄位
-const sortOrder = ref('desc'); // 預設排序順序
+// 新增：篩選器相關狀態
+const filterOptions = ['全部', '產線A', '產線B', '產線C']; // 定義篩選器選項
+const activeFilter = ref('全部'); // 追蹤當前選中的篩選條件
 
 // --- 方法 ---
-// 改造 fetchData，讓它同時處理分頁和排序
 const fetchData = async () => {
   try {
-    const response = await axios.get('http://localhost:5000/api/v1/samples', {
-      params: {
-        page: currentPage.value,
-        per_page: 5,
-        sort_by: sortColumn.value,
-        order: sortOrder.value,
-      }
-    });
+    // 建立一個 params 物件，動態加入篩選條件
+    const params: any = {
+      page: currentPage.value,
+      per_page: 5,
+      sort_by: sortColumn.value,
+      order: sortOrder.value,
+    };
+
+    // 如果選中的不是「全部」，才把 line_name 參數加進去
+    if (activeFilter.value !== '全部') {
+      params.line_name = activeFilter.value;
+    }
+
+    const response = await axios.get('http://localhost:5000/api/v1/samples', { params });
     samples.value = response.data.data;
     pagination.value = response.data.pagination;
   } catch (error) {
@@ -50,64 +56,58 @@ const fetchData = async () => {
   }
 };
 
-// 新增：處理表頭點擊事件的函式
 const handleSort = (columnName: string) => {
-  // 如果點擊的是當前已排序的欄位，則反轉排序方向
   if (sortColumn.value === columnName) {
     sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
   } else {
-    // 否則，設定新的排序欄位，並預設為降序
     sortColumn.value = columnName;
     sortOrder.value = 'desc';
   }
-  // 重新抓取第一頁的資料
   currentPage.value = 1;
   fetchData();
 };
 
-// --- 生命週期掛鉤 ---
-onMounted(() => {
+// 新增：處理篩選器點擊事件的函式
+const selectFilter = (option: string) => {
+  activeFilter.value = option;
+  currentPage.value = 1; // 每次篩選都回到第一頁
   fetchData();
-});
+};
 
-// 改造分頁按鈕的函式
 const changePage = (page: number) => {
+  if(page < 1) return;
   currentPage.value = page;
   fetchData();
 }
+
+// --- 生命週期掛鉤 ---
+onMounted(fetchData);
 
 </script>
 
 <template>
   <div>
+    <div class="filter-tabs">
+      <button
+        v-for="option in filterOptions"
+        :key="option"
+        :class="{ active: activeFilter === option }"
+        @click="selectFilter(option)"
+      >
+        {{ option }}
+      </button>
+    </div>
+
     <table>
       <thead>
         <tr>
-          <th @click="handleSort('id')">
-            ID
-            <span v-if="sortColumn === 'id'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
-          </th>
-          <th @click="handleSort('line_name')">
-            產線名稱
-            <span v-if="sortColumn === 'line_name'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
-          </th>
+          <th @click="handleSort('id')">ID <span v-if="sortColumn === 'id'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span></th>
+          <th @click="handleSort('line_name')">產線名稱 <span v-if="sortColumn === 'line_name'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span></th>
           <th @click="handleSort('product_name')">產品名稱</th>
-          <th @click="handleSort('timestamp')">
-            時間戳記
-            <span v-if="sortColumn === 'timestamp'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
-          </th>
-          <th @click="handleSort('metric_a')">
-            指標 A
-            <span v-if="sortColumn === 'metric_a'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
-          </th>
-          <th @click="handleSort('metric_b')">
-            指標 B
-            <span v-if="sortColumn === 'metric_b'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
-          </th>
-          <th @click="handleSort('operator')">
-            操作員
-            <span v-if="sortColumn === 'operator'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
-          </th>
+          <th @click="handleSort('timestamp')">時間戳記 <span v-if="sortColumn === 'timestamp'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span></th>
+          <th @click="handleSort('metric_a')">指標 A <span v-if="sortColumn === 'metric_a'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span></th>
+          <th @click="handleSort('metric_b')">指標 B <span v-if="sortColumn === 'metric_b'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span></th>
+          <th @click="handleSort('operator')">操作員 <span v-if="sortColumn === 'operator'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span></th>
         </tr>
       </thead>
       <tbody>
@@ -123,7 +123,7 @@ const changePage = (page: number) => {
       </tbody>
     </table>
 
-    <div class="pagination-controls" v-if="pagination">
+    <div class="pagination-controls" v-if="pagination && pagination.total_items > 0">
       <button @click="changePage(pagination.current_page - 1)" :disabled="!pagination.has_prev">
         上一頁
       </button>
@@ -138,32 +138,67 @@ const changePage = (page: number) => {
 </template>
 
 <style scoped>
+/* 新增 filter-tabs 的樣式 */
+.filter-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  background-color: #e2e8f0;
+  padding: 0.25rem;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.filter-tabs button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  color: #4a5568;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-tabs button.active {
+  background-color: white;
+  color: #0C809F;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* ... table 和 pagination 的樣式不變 ... */
 table {
-  width: 100%; /* 讓表格填滿可用寬度 */
-  border-collapse: collapse; /* 讓儲存格邊框合併，看起來更簡潔 */
-  margin-top: 1rem;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  cursor: pointer;
+  user-select: none;
+}
+th:hover {
+  background-color: #e8e8e8;
 }
 
 th, td {
-  border: 1px solid #ddd; /* 為儲存格和表頭加上邊框 */
-  padding: 12px; /* 增加內距，讓內容不要擠在一起 */
-  text-align: left; /* 文字靠左對齊 */
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
 }
 
 thead {
-  background-color: #f2f2f2; /* 為表頭加上淺灰色背景 */
+  background-color: #f2f2f2;
   font-weight: bold;
 }
 
 tbody tr:nth-child(even) {
-  background-color: #f9f9f9; /* 斑馬紋效果，讓奇偶數列顏色不同，增加可讀性 */
+  background-color: #f9f9f9;
 }
 
 tbody tr:hover {
-  background-color: #f1f1f1; /* 滑鼠懸停時改變背景色，提供互動感 */
+  background-color: #f1f1f1;
 }
 
-/* 新增分頁控制項的樣式 */
 .pagination-controls {
   margin-top: 1rem;
   display: flex;
@@ -171,27 +206,9 @@ tbody tr:hover {
   align-items: center;
 }
 
-button {
-  padding: 8px 16px;
-  border: 1px solid #ddd;
-  background-color: white;
-  cursor: pointer;
-}
-
-button:disabled {
+.pagination-controls button:disabled {
   background-color: #f5f5f5;
   cursor: not-allowed;
   color: #aaa;
 }
-
-/* 新增 th 的樣式，讓它看起來可以點擊 */
-th {
-  cursor: pointer;
-  user-select: none; /* 防止點擊時選取文字 */
-}
-
-th:hover {
-  background-color: #e8e8e8;
-}
-
 </style>
