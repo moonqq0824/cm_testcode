@@ -1,21 +1,22 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
+import StatTrend from '../components/StatTrend.vue'; // <-- 1. 匯入新元件
 
-// 定義統計數據的型別
+// 2. 更新 Stats 型別
 interface Stats {
   total_records: number;
   avg_metric_a: number;
   avg_metric_b: number;
   latest_record_time: string | null;
+  prev_avg_metric_a: number; // 新增
+  prev_avg_metric_b: number; // 新增
 }
 
-// 建立響應式變數來存放統計數據
 const stats = ref<Stats | null>(null);
-const isLoading = ref(true); // 加上一個載入狀態，提升使用者體驗
-const error = ref<string | null>(null); // 用來存放錯誤訊息
+const isLoading = ref(true);
+const error = ref<string | null>(null);
 
-// 抓取統計數據
 const fetchStats = async () => {
   try {
     isLoading.value = true;
@@ -29,10 +30,8 @@ const fetchStats = async () => {
   }
 };
 
-// 在元件掛載後執行
 onMounted(fetchStats);
 
-// 一個簡單的函式來格式化日期
 const formatDateTime = (isoString: string | null) => {
   if (!isoString) return '無';
   return new Date(isoString).toLocaleString('zh-TW');
@@ -56,13 +55,17 @@ const formatDateTime = (isoString: string | null) => {
       <div class="stat-card">
         <div class="card-title">指標 A 平均值</div>
         <div class="card-value">{{ stats.avg_metric_a }}</div>
-        <div class="card-footer">單位</div>
+        <div class="card-footer">
+          <StatTrend :current="stats.avg_metric_a" :previous="stats.prev_avg_metric_a" />
+        </div>
       </div>
       
       <div class="stat-card">
         <div class="card-title">指標 B 平均值</div>
         <div class="card-value">{{ stats.avg_metric_b }}</div>
-        <div class="card-footer">單位</div>
+        <div class="card-footer">
+          <StatTrend :current="stats.avg_metric_b" :previous="stats.prev_avg_metric_b" />
+        </div>
       </div>
       
       <div class="stat-card">
@@ -75,6 +78,11 @@ const formatDateTime = (isoString: string | null) => {
 </template>
 
 <style scoped>
+/* ... (樣式不變，除了 card-footer) ... */
+.stats-grid, .stat-card, .card-title, .card-value, .error-message {
+  /* 這些樣式都和之前一樣 */
+  margin-top: 0;
+}
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -111,9 +119,8 @@ const formatDateTime = (isoString: string | null) => {
 }
 
 .card-footer {
-  margin-top: auto; /* 將 footer 推到卡片底部 */
-  color: #94a3b8;
-  font-size: 0.8rem;
+  margin-top: auto;
+  min-height: 1.2em; /* 給 footer 一個最小高度，避免卡片跳動 */
 }
 
 .error-message {
