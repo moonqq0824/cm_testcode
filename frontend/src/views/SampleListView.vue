@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 
-// --- 型別定義 (不變) ---
+// --- 型別定義 ---
 interface Sample {
   id: number;
   line_name: string;
@@ -27,27 +27,45 @@ const pagination = ref<Pagination | null>(null);
 const currentPage = ref(1);
 const sortColumn = ref('timestamp');
 const sortOrder = ref('desc');
+const filterOptions = ['全部', '產線A', '產線B', '產線C'];
+const activeFilter = ref('全部');
 
-// 新增：篩選器相關狀態
-const filterOptions = ['全部', '產線A', '產線B', '產線C']; // 定義篩選器選項
-const activeFilter = ref('全部'); // 追蹤當前選中的篩選條件
+// 用來存放被勾選的項目 ID (這是唯一一次宣告)
+const selectedIds = ref<number[]>([]);
+
+// --- 計算屬性 (Computed) ---
+// 計算「全選」複選框的狀態
+const isAllSelected = computed({
+  get: () => {
+    const pageIds = samples.value.map(s => s.id);
+    return pageIds.length > 0 && pageIds.every(id => selectedIds.value.includes(id));
+  },
+  set: (value: boolean) => {
+    const pageIds = samples.value.map(s => s.id);
+    if (value) {
+      pageIds.forEach(id => {
+        if (!selectedIds.value.includes(id)) {
+          selectedIds.value.push(id);
+        }
+      });
+    } else {
+      selectedIds.value = selectedIds.value.filter(id => !pageIds.includes(id));
+    }
+  }
+});
 
 // --- 方法 ---
 const fetchData = async () => {
   try {
-    // 建立一個 params 物件，動態加入篩選條件
     const params: any = {
       page: currentPage.value,
       per_page: 5,
       sort_by: sortColumn.value,
       order: sortOrder.value,
     };
-
-    // 如果選中的不是「全部」，才把 line_name 參數加進去
     if (activeFilter.value !== '全部') {
       params.line_name = activeFilter.value;
     }
-
     const response = await axios.get('http://localhost:5000/api/v1/samples', { params });
     samples.value = response.data.data;
     pagination.value = response.data.pagination;
@@ -67,18 +85,36 @@ const handleSort = (columnName: string) => {
   fetchData();
 };
 
-// 新增：處理篩選器點擊事件的函式
 const selectFilter = (option: string) => {
   activeFilter.value = option;
-  currentPage.value = 1; // 每次篩選都回到第一頁
+  currentPage.value = 1;
   fetchData();
 };
 
 const changePage = (page: number) => {
-  if(page < 1) return;
+  if (page < 1 || (pagination.value && page > pagination.value.total_pages) || !pagination.value) return;
   currentPage.value = page;
   fetchData();
-}
+};
+
+const deleteSelected = async () => {
+  if (selectedIds.value.length === 0) {
+    alert('請先勾選要刪除的項目');
+    return;
+  }
+  if (window.confirm(`你確定要刪除這 ${selectedIds.value.length} 筆紀錄嗎？`)) {
+    try {
+      await axios.delete('http://localhost:5000/api/v1/samples', {
+        data: { ids: selectedIds.value }
+      });
+      selectedIds.value = [];
+      fetchData();
+    } catch (error) {
+      console.error('刪除時發生錯誤:', error);
+      alert('刪除失敗，請稍後再試。');
+    }
+  }
+};
 
 // --- 生命週期掛鉤 ---
 onMounted(fetchData);
@@ -87,20 +123,26 @@ onMounted(fetchData);
 
 <template>
   <div>
-    <div class="filter-tabs">
-      <button
-        v-for="option in filterOptions"
-        :key="option"
-        :class="{ active: activeFilter === option }"
-        @click="selectFilter(option)"
-      >
-        {{ option }}
+    <div class="toolbar">
+      <div class="filter-tabs">
+        <button
+          v-for="option in filterOptions"
+          :key="option"
+          :class="{ active: activeFilter === option }"
+          @click="selectFilter(option)"
+        >
+          {{ option }}
+        </button>
+      </div>
+      <button class="delete-btn" v-if="selectedIds.length > 0" @click="deleteSelected">
+        刪除已選 ({{ selectedIds.length }})
       </button>
     </div>
 
     <table>
       <thead>
         <tr>
+          <th><input type="checkbox" v-model="isAllSelected" /></th>
           <th @click="handleSort('id')">ID <span v-if="sortColumn === 'id'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span></th>
           <th @click="handleSort('line_name')">產線名稱 <span v-if="sortColumn === 'line_name'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span></th>
           <th @click="handleSort('product_name')">產品名稱</th>
@@ -111,7 +153,8 @@ onMounted(fetchData);
         </tr>
       </thead>
       <tbody>
-        <tr v-for="sample in samples" :key="sample.id">
+        <tr v-for="sample in samples" :key="sample.id" :class="{ selected: selectedIds.includes(sample.id) }">
+          <td><input type="checkbox" :value="sample.id" v-model="selectedIds" /></td>
           <td>{{ sample.id }}</td>
           <td>{{ sample.line_name }}</td>
           <td>{{ sample.product_name }}</td>
@@ -138,11 +181,16 @@ onMounted(fetchData);
 </template>
 
 <style scoped>
-/* 新增 filter-tabs 的樣式 */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
 .filter-tabs {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 1.5rem;
   background-color: #e2e8f0;
   padding: 0.25rem;
   border-radius: 8px;
@@ -166,7 +214,24 @@ onMounted(fetchData);
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-/* ... table 和 pagination 的樣式不變 ... */
+.delete-btn {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.delete-btn:hover {
+  background-color: #dc2626;
+}
+
+tbody tr.selected {
+  background-color: #fed7d7 !important;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -191,11 +256,11 @@ thead {
   font-weight: bold;
 }
 
-tbody tr:nth-child(even) {
+tbody tr:nth-child(even):not(.selected) {
   background-color: #f9f9f9;
 }
 
-tbody tr:hover {
+tbody tr:not(.selected):hover {
   background-color: #f1f1f1;
 }
 

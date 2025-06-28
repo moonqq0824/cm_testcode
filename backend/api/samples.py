@@ -93,3 +93,23 @@ class SampleList(Resource):
         }
         
         return response_data, 200
+    @ns.doc(body=ns.model('BatchDeleteInput', {
+        'ids': fields.List(fields.Integer, required=True, description='要刪除的紀錄 ID 列表')
+    }))
+    def delete(self):
+        """批次刪除多筆產線紀錄"""
+        # ns.payload 會自動解析請求 body 中的 JSON 資料
+        ids_to_delete = ns.payload.get('ids')
+
+        if not ids_to_delete:
+            # 如果沒有提供 ids，回傳一個錯誤請求
+            return {'message': '請提供要刪除的 ID 列表'}, 400
+
+        # 使用 SQLAlchemy 的 in_ 運算子來一次刪除所有對應的紀錄
+        num_deleted = db.session.query(Sample).filter(Sample.id.in_(ids_to_delete)).delete(synchronize_session=False)
+        db.session.commit()
+
+        if num_deleted > 0:
+            return {'message': f'成功刪除 {num_deleted} 筆紀錄'}, 200
+        else:
+            return {'message': '找不到對應的紀錄可供刪除'}, 404
