@@ -2,6 +2,7 @@
 
 from flask_restx import Namespace, Resource, fields
 from models import Sample # 從 models.py 匯入我們的 Sample 模型
+from extensions import db
 
 # 1. 建立一個新的 Namespace，專門給 sample 功能使用
 ns = Namespace('samples', description='產線紀錄相關操作')

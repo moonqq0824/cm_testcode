@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import SampleListView from '../views/SampleListView.vue';
 import DashboardView from '../views/DashboardView.vue';
-import AnalysisView from '../views/AnalysisView.vue'; // <-- 1. 匯入新的圖表頁面
+import AnalysisView from '../views/AnalysisView.vue'; 
+import WastewaterReportView from '../views/WastewaterReportView.vue';
 
 const routes = [
   {
@@ -18,6 +19,11 @@ const routes = [
     path: '/analysis', // <-- 2. 新增圖表頁面的路徑
     name: 'Analysis',
     component: AnalysisView
+  },
+  {
+    path: '/wastewater-reports', // <-- 新增廢水報告的路徑
+    name: 'WastewaterReport',
+    component: WastewaterReportView
   },
 ];
 

@@ -9,6 +9,7 @@
       <router-link to="/" class="nav-link">首頁儀表板</router-link>
       <router-link to="/samples" class="nav-link">產線紀錄總覽</router-link>
       <router-link to="/analysis" class="nav-link">產線分析圖表</router-link> 
+      <router-link to="/wastewater-reports" class="nav-link">廢水報告管理</router-link>
     </nav>
   </aside>
 </template>
