@@ -6,9 +6,8 @@
   <aside class="sidebar">
     <h1 class="sidebar-title">數據平台</h1>
     <nav class="nav-menu">
-      <a href="#" class="nav-link active">產線紀錄總覽</a>
-      <a href="#" class="nav-link">首頁儀表板</a>
-      <a href="#" class="nav-link">產線分析圖表</a>
+      <router-link to="/samples" class="nav-link">產線紀錄總覽</router-link>
+      <router-link to="/" class="nav-link">首頁儀表板</router-link>
     </nav>
   </aside>
 </template>

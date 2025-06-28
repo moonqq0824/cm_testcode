@@ -1,55 +1,25 @@
 <script setup lang="ts">
 import Sidebar from './components/Sidebar.vue';
-import SampleList from './components/SampleList.vue';
 </script>
 
 <template>
   <div class="app-layout">
     <Sidebar />
     <main class="main-content">
-      <SampleList />
+      <router-view />
     </main>
   </div>
 </template>
 
 <style scoped>
-.sidebar {
-  width: 260px;
-  background-color: #F7FAFC;
-  border-right: 1px solid #e2e8f0;
-  padding: 1.5rem;
+.app-layout {
   display: flex;
-  flex-direction: column;
+  height: 100vh;
 }
 
-.sidebar-title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 2rem;
-  color: #2D3748;
-}
-
-.nav-menu {
-  display: flex;
-  flex-direction: column;
-}
-
-.nav-link {
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  text-decoration: none;
-  color: #4a5568;
-  margin-bottom: 0.5rem;
-  transition: background-color 0.2s;
-}
-
-.nav-link:hover {
-  background-color: #e2e8f0;
-}
-
-.nav-link.active {
-  background-color: #0C809F;
-  color: white;
-  font-weight: bold;
+.main-content {
+  flex-grow: 1;
+  padding: 2rem 3rem;
+  overflow-y: auto;
 }
 </style>
