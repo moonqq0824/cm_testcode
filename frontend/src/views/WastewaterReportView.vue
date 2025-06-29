@@ -104,6 +104,7 @@ onMounted(fetchData);
         v-model="searchTerm"
         @input="onSearchInput"
       />
+      <router-link to="/wastewater-reports/new" class="add-btn"> ＋ 新增報告 </router-link>
     </div>
 
     <div v-if="isLoading">正在載入報告...</div>
@@ -241,5 +242,32 @@ onMounted(fetchData);
 .slide-leave-to {
   transform: translateX(100%);
   opacity: 0;
+}
+/* 修改 toolbar 的樣式 */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+/* 新增 actions-group 的樣式 */
+.actions-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.add-btn {
+  background-color: #0c809f;
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+.add-btn:hover {
+  opacity: 0.9;
 }
 </style>
