@@ -95,3 +95,47 @@ class WastewaterReportList(Resource):
         db.session.commit()
         
         return new_report, 201
+
+@ns.route('/<int:report_id>') # 這個路由會處理像 /wastewater-reports/1 這樣的路徑
+@ns.response(404, '找不到指定的報告')
+@ns.param('report_id', '報告的唯一識別碼')
+class WastewaterReportResource(Resource):
+    
+    @ns.marshal_with(report_model)
+    def get(self, report_id):
+        """獲取單筆廢水報告的詳細資料"""
+        # .get_or_404 是一個很方便的函式，如果找不到對應ID的紀錄，會自動回傳 404 錯誤
+        return WastewaterReport.query.get_or_404(report_id)
+
+    @ns.expect(report_input_model, validate=True)
+    @ns.marshal_with(report_model)
+    def put(self, report_id):
+        """更新一筆廢水報告"""
+        report_to_update = WastewaterReport.query.get_or_404(report_id)
+        data = ns.payload
+
+        # 更新報告主體的欄位
+        report_to_update.vendor = data['vendor']
+        report_to_update.status = data['status']
+        report_to_update.report_date = datetime.strptime(data['report_date'], '%Y-%m-%d').date()
+
+        # 更新檢測項目：這裡我們用一個簡單但有效率的策略
+        # 1. 刪除所有舊的關聯項目
+        for item in report_to_update.items:
+            db.session.delete(item)
+        
+        # 2. 根據傳來的新資料，重新建立所有項目
+        for item_data in data['items']:
+            new_item = WastewaterReportItem(
+                item_name=item_data['item_name'],
+                value=item_data['value'],
+                unit=item_data.get('unit'),
+                standard=item_data.get('standard'),
+                is_compliant=item_data['is_compliant'],
+                report=report_to_update # 關聯到正在更新的報告
+            )
+            db.session.add(new_item)
+            
+        db.session.commit()
+        
+        return report_to_update

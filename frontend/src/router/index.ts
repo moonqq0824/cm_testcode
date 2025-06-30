@@ -31,6 +31,12 @@ const routes = [
     name: 'WastewaterReportNew',
     component: WastewaterReportFormView,
   },
+  {
+    path: '/wastewater-reports/:report_id/edit', // <-- 新增帶有 id 參數的編輯路由
+    name: 'WastewaterReportEdit',
+    component: WastewaterReportFormView, // <-- 注意：它重複使用了同一個表單元件！
+    props: true // <-- 允許將路由參數作為 props 傳入元件
+  },
 ];
 
 const router = createRouter({

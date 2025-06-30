@@ -123,6 +123,9 @@ onMounted(fetchData);
         </div>
         <div class="card-body">
           <span class="status-badge" :class="`status-${report.status}`">{{ report.status }}</span>
+          <router-link :to="`/wastewater-reports/${report.id}/edit`" class="edit-link">
+            編輯
+          </router-link>
         </div>
       </div>
     </div>
@@ -269,5 +272,18 @@ onMounted(fetchData);
 }
 .add-btn:hover {
   opacity: 0.9;
+}
+.card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.edit-link {
+  font-size: 0.9rem;
+  color: #0C809F;
+  text-decoration: none;
+}
+.edit-link:hover {
+  text-decoration: underline;
 }
 </style>
