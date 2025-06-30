@@ -1,8 +1,129 @@
 /* frontend/src/style.css */
 
+/* 1. 在檔案的最頂部，使用 @import 從 Google Fonts 引入我們需要的字體 */
+/* 我們選擇了三種常用的字重：400 (正常), 500 (中等), 700 (粗體) */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+/* 2. 在 body 樣式中，將 Noto Sans TC 設為預設字體 */
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  /* 這是一個 "font stack" (字體堆疊)。
+    瀏覽器會從左到右依序尋找電腦上或網路上已載入的字體。
+    如果找不到 jf-openhuninn，它就會使用 Noto Sans TC。
+    如果連 Noto Sans TC 都失敗，它就會使用系統預設的無襯線字體。
+  */
+  font-family: 'jf-openhuninn', 'Noto Sans TC', sans-serif;
   background-color: #FFFFFF;
   color: #2D3748;
+}
+
+/* --- 按鈕通用樣式 --- */
+
+/* 基礎按鈕樣式 */
+.btn {
+  /* 基礎排版與大小 */
+  display: inline-flex;
+  /* 使用 flex 來讓內容垂直置中 */
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.5;
+  /* 標準化行高 */
+
+  /* 外觀 */
+  border-radius: 50px;
+  border: 1px solid transparent;
+  text-decoration: none;
+  text-align: center;
+
+  /* 互動效果 */
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  user-select: none;
+  /* 防止點擊時選取文字 */
+}
+
+/* 主要按鈕 (藍綠色) */
+.btn-primary {
+  background-color: #0C809F;
+  color: white;
+  border-color: #0C809F;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(12, 128, 159, 0.2);
+}
+
+/* 次要按鈕 (灰色) */
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border-color: #6c757d;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(108, 117, 125, 0.2);
+}
+
+/* 刪除按鈕 (紅色) */
+.btn-danger {
+  background-color: #e74c3c;
+  color: white;
+  border-color: #e74c3c;
+}
+
+.btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(231, 76, 60, 0.2);
+}
+
+/* 新增：外框線按鈕 (預設樣式) */
+.btn-outline {
+  background-color: #FFFFFF;
+  border-color: #e2e8f0;
+  color: #475569;
+}
+
+.btn-outline:hover:not(:disabled) {
+  background-color: #f8fafc;
+}
+
+/* 新增：通用的禁用樣式 */
+.btn:disabled {
+  background-color: #f1f5f9;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+
+/* --- 表單輸入框通用樣式 --- */
+
+/* 我們將這個樣式應用到所有常見的輸入元素上 */
+input[type="text"],
+input[type="date"],
+input[type="number"],
+input[type="password"],
+input[type="email"],
+select {
+  /* 加上一個過場動畫，讓顏色和陰影變化更柔和 */
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+/* :focus-visible 是一個現代的偽類，只在使用者「真正需要」看到焦點時 (例如用鍵盤Tab切換) 才顯示
+   我們用它來定義被點擊或選中時的樣式 */
+input:focus-visible,
+select:focus-visible {
+  outline: none;
+  /* 移除瀏覽器預設的、比較醜的藍色外框 */
+  border-color: #0C809F;
+  /* 將邊框變為我們的主題色 */
+  box-shadow: 0 0 0 3px rgba(12, 128, 159, 0.2);
+  /* 加上柔和的藍色外光暈 */
 }

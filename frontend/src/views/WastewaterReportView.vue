@@ -104,7 +104,7 @@ onMounted(fetchData);
         v-model="searchTerm"
         @input="onSearchInput"
       />
-      <router-link to="/wastewater-reports/new" class="add-btn"> ＋ 新增報告 </router-link>
+      <router-link to="/wastewater-reports/new" class="btn btn-primary">＋ 新增報告</router-link>
     </div>
 
     <div v-if="isLoading">正在載入報告...</div>
@@ -147,17 +147,17 @@ onMounted(fetchData);
   margin-bottom: 1.5rem;
 }
 .filter-tabs {
-  display: flex;
-  gap: 0.5rem;
+  display: inline-flex; /* 改為 inline-flex 讓背景寬度自適應 */
+  gap: 0.25rem; /* 稍微減少間距 */
   background-color: #e2e8f0;
   padding: 0.25rem;
-  border-radius: 8px;
+  border-radius: 50px; /* 讓容器本身也變成膠囊狀 */
   width: fit-content;
 }
 .filter-tabs button {
   padding: 0.5rem 1rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 50px; /* 讓按鈕本身也變成膠囊狀 */
   background-color: transparent;
   color: #4a5568;
   font-weight: 500;
@@ -166,8 +166,8 @@ onMounted(fetchData);
 }
 .filter-tabs button.active {
   background-color: white;
-  color: #0c809f;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  color: #0C809F;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 .search-input {
   padding: 0.5rem 0.75rem;

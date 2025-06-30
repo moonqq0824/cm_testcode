@@ -29,12 +29,9 @@ const sortColumn = ref('timestamp');
 const sortOrder = ref('desc');
 const filterOptions = ['全部', '產線A', '產線B', '產線C'];
 const activeFilter = ref('全部');
-
-// 用來存放被勾選的項目 ID (這是唯一一次宣告)
 const selectedIds = ref<number[]>([]);
 
-// --- 計算屬性 (Computed) ---
-// 計算「全選」複選框的狀態
+// --- 計算屬性 ---
 const isAllSelected = computed({
   get: () => {
     const pageIds = samples.value.map(s => s.id);
@@ -118,7 +115,6 @@ const deleteSelected = async () => {
 
 // --- 生命週期掛鉤 ---
 onMounted(fetchData);
-
 </script>
 
 <template>
@@ -134,7 +130,7 @@ onMounted(fetchData);
           {{ option }}
         </button>
       </div>
-      <button class="delete-btn" v-if="selectedIds.length > 0" @click="deleteSelected">
+      <button class="btn btn-danger" v-if="selectedIds.length > 0" @click="deleteSelected">
         刪除已選 ({{ selectedIds.length }})
       </button>
     </div>
@@ -167,13 +163,13 @@ onMounted(fetchData);
     </table>
 
     <div class="pagination-controls" v-if="pagination && pagination.total_items > 0">
-      <button @click="changePage(pagination.current_page - 1)" :disabled="!pagination.has_prev">
+      <button class="btn btn-outline" @click="changePage(pagination.current_page - 1)" :disabled="!pagination.has_prev">
         上一頁
       </button>
       <span>
         頁數 {{ pagination.current_page }} / {{ pagination.total_pages }}
       </span>
-      <button @click="changePage(pagination.current_page + 1)" :disabled="!pagination.has_next">
+      <button class="btn btn-outline" @click="changePage(pagination.current_page + 1)" :disabled="!pagination.has_next">
         下一頁
       </button>
     </div>
@@ -189,18 +185,18 @@ onMounted(fetchData);
 }
 
 .filter-tabs {
-  display: flex;
-  gap: 0.5rem;
+  display: inline-flex;
+  gap: 0.25rem;
   background-color: #e2e8f0;
   padding: 0.25rem;
-  border-radius: 8px;
+  border-radius: 50px;
   width: fit-content;
 }
 
 .filter-tabs button {
   padding: 0.5rem 1rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 50px;
   background-color: transparent;
   color: #4a5568;
   font-weight: 500;
@@ -212,20 +208,6 @@ onMounted(fetchData);
   background-color: white;
   color: #0C809F;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.delete-btn {
-  background-color: #ef4444;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.delete-btn:hover {
-  background-color: #dc2626;
 }
 
 tbody tr.selected {
@@ -269,6 +251,14 @@ tbody tr:not(.selected):hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.pagination-controls button {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  background-color: white;
+  cursor: pointer;
+  border-radius: 6px;
 }
 
 .pagination-controls button:disabled {

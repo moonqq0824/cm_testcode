@@ -197,10 +197,10 @@ onMounted(() => {
       <button type="button" class="add-item-btn" @click="addItemRow">＋ 新增檢測項目</button>
       
       <div class="form-actions">
-        <button type="submit" class="btn-primary" :disabled="isSubmitting">
+        <button type="submit" class="btn btn-primary" :disabled="isSubmitting">
           {{ isSubmitting ? '儲存中...' : '儲存報告' }}
         </button>
-        <button type="button" class="btn-secondary" @click="cancelForm">取消</button>
+        <button type="button" class="btn btn-secondary" @click="cancelForm">取消</button>
       </div>
     </form>
   </div>

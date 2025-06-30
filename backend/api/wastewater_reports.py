@@ -32,8 +32,8 @@ report_model = ns.model('WastewaterReport', {
 report_item_input_model = ns.model('WastewaterReportItemInput', {
     'item_name': fields.String(required=True, description='項目名稱'),
     'value': fields.Float(required=True, description='檢測值'),
-    'unit': fields.String(description='單位'),
-    'standard': fields.String(description='標準值'),
+    'unit': fields.String(description='單位', nullable=True), # <-- 加上 nullable=True
+    'standard': fields.String(description='標準值', nullable=True), # <-- 加上 nullable=True
     'is_compliant': fields.Boolean(required=True, description='是否合格'),
 })
 report_input_model = ns.model('WastewaterReportInput', {
