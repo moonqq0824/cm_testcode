@@ -2,6 +2,7 @@
 
 from extensions import db
 from datetime import datetime
+from extensions import bcrypt
 
 class Sample(db.Model):
     """產線紀錄模型"""
@@ -52,3 +53,21 @@ class WastewaterReportItem(db.Model):
 
     def __repr__(self):
         return f'<WastewaterReportItem id={self.id} item_name={self.item_name}>'
+    
+class User(db.Model):
+    """使用者模型"""
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+
+    def set_password(self, password):
+        """使用 bcrypt 來設定密碼的雜湊值"""
+        self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    def check_password(self, password):
+        """使用 bcrypt 來檢查密碼是否正確"""
+        return bcrypt.check_password_hash(self.password_hash, password)
+
+    def __repr__(self):
+        return f'<User {self.username}>'
